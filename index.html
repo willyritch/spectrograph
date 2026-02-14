@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HearScope">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="application-name" content="HearScope">
+<meta name="description" content="Real-time audio spectrogram with hearing loss frequency overlay">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="120x120" href="icon-120.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" href="icon-512.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" href="icon-512.png">
+<link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="icon-512.png">
+<link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" href="icon-512.png">
+<link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="icon-512.png">
+<link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="icon-512.png">
+<title>HearScope — Live Spectrogram</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --border: #1e1e2e;
+    --text: #e0e0ec;
+    --text-dim: #6a6a82;
+    --accent: #00e5a0;
+    --danger: #ff4466;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    overflow: hidden;
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior: none;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    height: -webkit-fill-available;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-right);
+    padding-right: env(safe-area-inset-left);
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px 8px;
+    flex-shrink: 0;
+  }
+  .logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+  }
+  .logo span { color: var(--text-dim); font-weight: 400; }
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    transition: background 0.3s;
+  }
+  .status-dot.live {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .canvas-wrap {
+    flex: 1;
+    position: relative;
+    margin: 4px 8px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    min-height: 0;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+
+  .controls {
+    flex-shrink: 0;
+    padding: 10px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .btn-row { display: flex; gap: 8px; }
+
+  button {
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0,229,160,0.15);
+    border: none;
+    background: none;
+    font: inherit;
+    color: inherit;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+    z-index: 5;
+  }
+  .btn:active { transform: scale(0.97); opacity: 0.85; }
+  .btn.stop {
+    background: rgba(255,68,102,0.15);
+    color: var(--danger);
+    border-color: rgba(255,68,102,0.3);
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
+  }
+  .toggle-label { font-size: 12px; color: var(--text-dim); }
+  .toggle-group { display: flex; gap: 4px; }
+  .toggle-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    position: relative;
+    z-index: 5;
+    min-height: 30px;
+    min-width: 40px;
+  }
+  .toggle-btn:active { opacity: 0.7; }
+  .toggle-btn.active {
+    background: rgba(0,229,160,0.12);
+    color: var(--accent);
+    border-color: rgba(0,229,160,0.3);
+  }
+
+  .start-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10,10,15,0.92);
+    z-index: 10;
+    transition: opacity 0.4s;
+    padding: 32px;
+    text-align: center;
+  }
+  .start-overlay.hidden { opacity: 0; pointer-events: none; }
+  .start-icon {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: rgba(0,229,160,0.1);
+    border: 2px solid rgba(0,229,160,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .start-icon svg { width: 32px; height: 32px; color: var(--accent); }
+  .start-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .start-sub {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    max-width: 300px;
+    margin-bottom: 28px;
+  }
+  .start-btn {
+    width: 200px;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #0a0a0f;
+    border: 1px solid var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+    z-index: 20;
+  }
+  .start-btn:active { opacity: 0.8; transform: scale(0.97); }
+
+  .db-meter {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    background: rgba(10,10,15,0.7);
+    padding: 3px 7px;
+    border-radius: 4px;
+    pointer-events: none;
+  }
+  .crosshair-info {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    background: rgba(10,10,15,0.7);
+    padding: 3px 7px;
+    border-radius: 4px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .crosshair-info.visible { opacity: 1; }
+
+  .standalone-badge {
+    display: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: var(--accent);
+    background: rgba(0,229,160,0.1);
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  @media (display-mode: standalone) {
+    .standalone-badge { display: inline; }
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="header">
+    <div class="logo">HearScope <span>v1.0</span><span class="standalone-badge">PWA</span></div>
+    <div class="status">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">IDLE</span>
+    </div>
+  </div>
+
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="spectrogram"></canvas>
+    <div class="db-meter" id="dbMeter">– dB</div>
+    <div class="crosshair-info" id="crosshairInfo"></div>
+
+    <div class="start-overlay" id="startOverlay">
+      <div class="start-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="22"/>
+        </svg>
+      </div>
+      <div class="start-title">HearScope</div>
+      <div class="start-sub">Real-time spectrogram with hearing loss overlay. Tap Start to enable your microphone and visualize the frequencies around you.</div>
+      <button type="button" class="start-btn" id="startBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        START
+      </button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="toggle-row">
+      <span class="toggle-label">Hearing Loss Overlay</span>
+      <div class="toggle-group">
+        <button type="button" class="toggle-btn active" id="overlayOn">ON</button>
+        <button type="button" class="toggle-btn" id="overlayOff">OFF</button>
+      </div>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Frequency Scale</span>
+      <div class="toggle-group">
+        <button type="button" class="toggle-btn active" id="scaleLog">LOG</button>
+        <button type="button" class="toggle-btn" id="scaleLin">LINEAR</button>
+      </div>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Color Map</span>
+      <div class="toggle-group">
+        <button type="button" class="toggle-btn active" id="cmapHot">HOT</button>
+        <button type="button" class="toggle-btn" id="cmapElectric">ELECTRIC</button>
+        <button type="button" class="toggle-btn" id="cmapGreen">MATRIX</button>
+      </div>
+    </div>
+    <div class="btn-row" id="btnRow" style="display:none">
+      <button type="button" class="btn stop" id="stopBtn">■ STOP</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('./sw.js').catch(function() {});
+    });
+  }
+
+  var audioCtx, analyser, source, stream;
+  var isRunning = false;
+  var showOverlay = true;
+  var freqScale = 'log';
+  var colorMap = 'hot';
+  var animId;
+
+  var canvas = document.getElementById('spectrogram');
+  var ctx = canvas.getContext('2d');
+  var wrap = document.getElementById('canvasWrap');
+  var spectroData = [];
+  var HISTORY = 300;
+
+  var hearingZones = [
+    { label: '~80y  ·  20 Hz – 1 kHz',     minHz: 20,    maxHz: 1000,  bg: 'rgba(59,130,246,',  age: 80 },
+    { label: '~70y  ·  1 – 4 kHz',          minHz: 1000,  maxHz: 4000,  bg: 'rgba(34,197,94,',   age: 70 },
+    { label: '~55y  ·  4 – 8 kHz',          minHz: 4000,  maxHz: 8000,  bg: 'rgba(234,179,8,',   age: 55 },
+    { label: '~40y  ·  8 – 12 kHz',         minHz: 8000,  maxHz: 12000, bg: 'rgba(249,115,22,',  age: 40 },
+    { label: '~25y  ·  12 – 20 kHz',        minHz: 12000, maxHz: 20000, bg: 'rgba(239,68,68,',   age: 25 },
+  ];
+
+  // ——— HIGH-CONTRAST COLOR MAPS ———
+
+  // HOT: black → red → bright yellow → white
+  function hotColor(t) {
+    t = Math.max(0, Math.min(1, t));
+    var r, g, b;
+    if (t < 0.33) {
+      // black to red
+      var p = t / 0.33;
+      r = Math.round(p * 255);
+      g = 0;
+      b = 0;
+    } else if (t < 0.66) {
+      // red to yellow
+      var p = (t - 0.33) / 0.33;
+      r = 255;
+      g = Math.round(p * 255);
+      b = 0;
+    } else {
+      // yellow to white
+      var p = (t - 0.66) / 0.34;
+      r = 255;
+      g = 255;
+      b = Math.round(p * 255);
+    }
+    return [r, g, b];
+  }
+
+  // ELECTRIC: black → deep blue → cyan → bright white
+  function electricColor(t) {
+    t = Math.max(0, Math.min(1, t));
+    var r, g, b;
+    if (t < 0.25) {
+      var p = t / 0.25;
+      r = 0;
+      g = 0;
+      b = Math.round(p * 180);
+    } else if (t < 0.5) {
+      var p = (t - 0.25) / 0.25;
+      r = 0;
+      g = Math.round(p * 220);
+      b = 180 + Math.round(p * 75);
+    } else if (t < 0.75) {
+      var p = (t - 0.5) / 0.25;
+      r = Math.round(p * 100);
+      g = 220 + Math.round(p * 35);
+      b = 255;
+    } else {
+      var p = (t - 0.75) / 0.25;
+      r = 100 + Math.round(p * 155);
+      g = 255;
+      b = 255;
+    }
+    return [r, g, b];
+  }
+
+  // MATRIX: black → green → bright green → white-green
+  function greenColor(t) {
+    t = Math.max(0, Math.min(1, t));
+    var r, g, b;
+    if (t < 0.5) {
+      var p = t / 0.5;
+      r = 0;
+      g = Math.round(p * 255);
+      b = Math.round(p * 30);
+    } else {
+      var p = (t - 0.5) / 0.5;
+      r = Math.round(p * 180);
+      g = 255;
+      b = Math.round(30 + p * 140);
+    }
+    return [r, g, b];
+  }
+
+  function getColor(t) {
+    if (colorMap === 'electric') return electricColor(t);
+    if (colorMap === 'green') return greenColor(t);
+    return hotColor(t);
+  }
+
+  function hzToY(hz, h, sampleRate) {
+    var maxHz = sampleRate / 2;
+    var minHz = 20;
+    if (freqScale === 'log') {
+      var logMin = Math.log10(minHz);
+      var logMax = Math.log10(maxHz);
+      var logHz = Math.log10(Math.max(minHz, Math.min(maxHz, hz)));
+      return h - ((logHz - logMin) / (logMax - logMin)) * h;
+    }
+    return h - (hz / maxHz) * h;
+  }
+  function yToHz(y, h, sampleRate) {
+    var maxHz = sampleRate / 2;
+    var minHz = 20;
+    var ratio = 1 - y / h;
+    if (freqScale === 'log') {
+      var logMin = Math.log10(minHz);
+      var logMax = Math.log10(maxHz);
+      return Math.pow(10, logMin + ratio * (logMax - logMin));
+    }
+    return ratio * maxHz;
+  }
+
+  function resizeCanvas() {
+    var dpr = window.devicePixelRatio || 1;
+    var rect = wrap.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('orientationchange', function() { setTimeout(resizeCanvas, 250); });
+
+  function startAudio() {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e) {
+      alert('Audio not supported.');
+      return;
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+    }).then(function(s) {
+      stream = s;
+      source = audioCtx.createMediaStreamSource(stream);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 4096;
+      analyser.smoothingTimeConstant = 0.65;
+      analyser.minDecibels = -90;
+      analyser.maxDecibels = -10;
+      source.connect(analyser);
+      isRunning = true;
+      spectroData = [];
+      document.getElementById('startOverlay').classList.add('hidden');
+      document.getElementById('statusDot').classList.add('live');
+      document.getElementById('statusText').textContent = 'LIVE';
+      document.getElementById('btnRow').style.display = 'flex';
+      resizeCanvas();
+      draw();
+    }).catch(function(e) {
+      alert('Microphone access denied. Allow mic access in Settings > Safari.');
+      console.error(e);
+    });
+  }
+
+  function stopAudio() {
+    isRunning = false;
+    if (animId) cancelAnimationFrame(animId);
+    if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
+    if (audioCtx) audioCtx.close();
+    audioCtx = null;
+    document.getElementById('statusDot').classList.remove('live');
+    document.getElementById('statusText').textContent = 'STOPPED';
+    document.getElementById('btnRow').style.display = 'none';
+    document.getElementById('startOverlay').classList.remove('hidden');
+  }
+
+  function draw() {
+    if (!isRunning) return;
+    animId = requestAnimationFrame(draw);
+    var w = wrap.clientWidth;
+    var h = wrap.clientHeight;
+    if (w === 0 || h === 0) return;
+    var sampleRate = audioCtx.sampleRate;
+    var bufLen = analyser.frequencyBinCount;
+    var dataArr = new Uint8Array(bufLen);
+    analyser.getByteFrequencyData(dataArr);
+
+    var floatData = new Float32Array(bufLen);
+    analyser.getFloatFrequencyData(floatData);
+    var maxDb = -Infinity;
+    for (var i = 0; i < floatData.length; i++) {
+      if (floatData[i] > maxDb) maxDb = floatData[i];
+    }
+    document.getElementById('dbMeter').textContent = (maxDb > -Infinity ? Math.round(maxDb) : '\u2013') + ' dB peak';
+
+    // Build column
+    var col = new Uint8Array(h);
+    for (var y = 0; y < h; y++) {
+      var hz = yToHz(y, h, sampleRate);
+      var bin = Math.round(hz / (sampleRate / 2) * (bufLen - 1));
+      col[y] = dataArr[Math.max(0, Math.min(bufLen - 1, bin))];
+    }
+    spectroData.push(col);
+    if (spectroData.length > HISTORY) spectroData.shift();
+
+    // Clear to true black
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, w, h);
+
+    // ——— HEARING LOSS ZONES ———
+    if (showOverlay) {
+      for (var zi = 0; zi < hearingZones.length; zi++) {
+        var zone = hearingZones[zi];
+        var y1 = hzToY(zone.maxHz, h, sampleRate);
+        var y2 = hzToY(zone.minHz, h, sampleRate);
+        var zoneH = y2 - y1;
+
+        // Subtle colored background
+        var grad = ctx.createLinearGradient(0, y1, 0, y2);
+        grad.addColorStop(0, zone.bg + '0.18)');
+        grad.addColorStop(0.5, zone.bg + '0.08)');
+        grad.addColorStop(1, zone.bg + '0.03)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, y1, w, zoneH);
+
+        // Dashed border at top of zone
+        ctx.strokeStyle = zone.bg + '0.35)';
+        ctx.lineWidth = 0.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(0, y1); ctx.lineTo(w, y1);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // ——— LARGE WHITE LABELS ———
+        if (zoneH > 24) {
+          var labelY = y1 + zoneH / 2;
+
+          // Text shadow for readability over spectrogram
+          ctx.font = '700 14px "JetBrains Mono", monospace';
+          ctx.textAlign = 'center';
+          var labelX = w / 2;
+
+          // Shadow
+          ctx.fillStyle = 'rgba(0,0,0,0.6)';
+          ctx.fillText(zone.label, labelX + 1, labelY + 4);
+          ctx.fillText(zone.label, labelX - 1, labelY + 4);
+          ctx.fillText(zone.label, labelX, labelY + 3);
+          ctx.fillText(zone.label, labelX, labelY + 5);
+
+          // White text
+          ctx.fillStyle = 'rgba(255,255,255,0.92)';
+          ctx.fillText(zone.label, labelX, labelY + 4);
+
+          // Smaller subtitle
+          ctx.font = '500 10px "JetBrains Mono", monospace';
+          ctx.fillStyle = 'rgba(0,0,0,0.5)';
+          ctx.fillText('\u226525 dB avg hearing loss', labelX, labelY + 18);
+          ctx.fillStyle = 'rgba(255,255,255,0.55)';
+          ctx.fillText('\u226525 dB avg hearing loss', labelX, labelY + 18);
+        }
+      }
+    }
+
+    // ——— SPECTROGRAM (bright, high-contrast) ———
+    for (var c = 0; c < spectroData.length; c++) {
+      var column = spectroData[c];
+      var x = Math.floor((c / HISTORY) * w);
+      var nextX = Math.floor(((c + 1) / HISTORY) * w);
+      var cw = Math.max(1, nextX - x);
+      for (var py = 0; py < h; py++) {
+        var val = column[py] / 255;
+        if (val < 0.015) continue;
+        // Boost contrast: apply a curve to make colors pop
+        var boosted = Math.pow(val, 0.7);
+        var rgb = getColor(boosted);
+        // Full opacity for strong signals, still visible for weak
+        var alpha = 0.15 + boosted * 0.85;
+        ctx.fillStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + alpha + ')';
+        ctx.fillRect(x, py, cw, 1);
+      }
+    }
+
+    // Frequency axis ticks
+    var ticks = [50, 100, 200, 500, 1000, 2000, 4000, 8000, 12000, 16000, 20000];
+    ctx.font = '500 9px "JetBrains Mono", monospace';
+    ctx.textAlign = 'left';
+    for (var ti = 0; ti < ticks.length; ti++) {
+      var thz = ticks[ti];
+      if (thz > sampleRate / 2) continue;
+      var ty = hzToY(thz, h, sampleRate);
+      if (ty < 8 || ty > h - 8) continue;
+      // Tick mark
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.fillRect(0, ty, 3, 1);
+      // Label with shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillText(thz >= 1000 ? (thz / 1000) + 'k' : thz + '', 6, ty - 1);
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.fillText(thz >= 1000 ? (thz / 1000) + 'k' : thz + '', 5, ty - 2);
+    }
+  }
+
+  // Touch frequency readout
+  var crosshairEl = document.getElementById('crosshairInfo');
+  function showFreqAt(clientY) {
+    if (!isRunning || !audioCtx) return;
+    var rect = canvas.getBoundingClientRect();
+    var y = clientY - rect.top;
+    var hz = yToHz(y, rect.height, audioCtx.sampleRate);
+    var label = hz >= 1000 ? (hz / 1000).toFixed(1) + ' kHz' : Math.round(hz) + ' Hz';
+    var ageInfo = '';
+    for (var i = 0; i < hearingZones.length; i++) {
+      if (hz >= hearingZones[i].minHz && hz <= hearingZones[i].maxHz) {
+        ageInfo = ' \u00b7 avg loss by ~' + hearingZones[i].age + 'y';
+        break;
+      }
+    }
+    crosshairEl.textContent = label + ageInfo;
+    crosshairEl.classList.add('visible');
+  }
+  canvas.addEventListener('touchstart', function(e) { if (e.touches.length) showFreqAt(e.touches[0].clientY); }, { passive: true });
+  canvas.addEventListener('touchmove', function(e) { if (e.touches.length) showFreqAt(e.touches[0].clientY); }, { passive: true });
+  canvas.addEventListener('touchend', function() { crosshairEl.classList.remove('visible'); }, { passive: true });
+  canvas.addEventListener('mousemove', function(e) { showFreqAt(e.clientY); });
+  canvas.addEventListener('mouseleave', function() { crosshairEl.classList.remove('visible'); });
+
+  // iOS-safe button wiring
+  var lastTap = 0;
+  function tapSafe(id, fn) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    function handler(e) {
+      e.preventDefault();
+      var now = Date.now();
+      if (now - lastTap < 300) return;
+      lastTap = now;
+      fn();
+    }
+    el.addEventListener('click', handler, false);
+    el.addEventListener('touchend', handler, { passive: false });
+  }
+
+  tapSafe('startBtn', startAudio);
+  tapSafe('stopBtn', stopAudio);
+
+  tapSafe('overlayOn', function() {
+    showOverlay = true;
+    document.getElementById('overlayOn').classList.add('active');
+    document.getElementById('overlayOff').classList.remove('active');
+  });
+  tapSafe('overlayOff', function() {
+    showOverlay = false;
+    document.getElementById('overlayOff').classList.add('active');
+    document.getElementById('overlayOn').classList.remove('active');
+  });
+  tapSafe('scaleLog', function() {
+    freqScale = 'log';
+    document.getElementById('scaleLog').classList.add('active');
+    document.getElementById('scaleLin').classList.remove('active');
+  });
+  tapSafe('scaleLin', function() {
+    freqScale = 'linear';
+    document.getElementById('scaleLin').classList.add('active');
+    document.getElementById('scaleLog').classList.remove('active');
+  });
+
+  function clearCmap() {
+    document.getElementById('cmapHot').classList.remove('active');
+    document.getElementById('cmapElectric').classList.remove('active');
+    document.getElementById('cmapGreen').classList.remove('active');
+  }
+  tapSafe('cmapHot', function() { colorMap = 'hot'; clearCmap(); document.getElementById('cmapHot').classList.add('active'); });
+  tapSafe('cmapElectric', function() { colorMap = 'electric'; clearCmap(); document.getElementById('cmapElectric').classList.add('active'); });
+  tapSafe('cmapGreen', function() { colorMap = 'green'; clearCmap(); document.getElementById('cmapGreen').classList.add('active'); });
+
+  resizeCanvas();
+})();
+</script>
+</body>
+</html>
