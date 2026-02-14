@@ -3,64 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-
-<!-- PWA / iOS Home Screen -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HearScope">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0f">
 <meta name="application-name" content="HearScope">
-<meta name="msapplication-TileColor" content="#0a0a0f">
 <meta name="description" content="Real-time audio spectrogram with hearing loss frequency overlay">
-
-<!-- Manifest -->
 <link rel="manifest" href="manifest.json">
-
-<!-- Favicon -->
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-
-<!-- Apple Touch Icons (home screen icon) -->
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="120x120" href="icon-120.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
-
-<!-- iOS Splash Screens (generated inline via CSS/JS below) -->
-<!-- iPhone SE / 8 -->
-<link rel="apple-touch-startup-image"
-      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)"
-      href="icon-512.png">
-<!-- iPhone X / XS / 11 Pro / 12 mini / 13 mini -->
-<link rel="apple-touch-startup-image"
-      media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)"
-      href="icon-512.png">
-<!-- iPhone XR / 11 / 12 / 13 / 14 -->
-<link rel="apple-touch-startup-image"
-      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)"
-      href="icon-512.png">
-<!-- iPhone 12 Pro Max / 13 Pro Max / 14 Plus -->
-<link rel="apple-touch-startup-image"
-      media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)"
-      href="icon-512.png">
-<!-- iPhone 14 Pro -->
-<link rel="apple-touch-startup-image"
-      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)"
-      href="icon-512.png">
-<!-- iPhone 14 Pro Max / 15 Plus / 15 Pro Max -->
-<link rel="apple-touch-startup-image"
-      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)"
-      href="icon-512.png">
-<!-- iPhone 15 / 15 Pro / 16 -->
-<link rel="apple-touch-startup-image"
-      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)"
-      href="icon-512.png">
-
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" href="icon-512.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" href="icon-512.png">
+<link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="icon-512.png">
+<link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" href="icon-512.png">
+<link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="icon-512.png">
+<link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="icon-512.png">
 <title>HearScope — Live Spectrogram</title>
-
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
 
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -81,7 +46,6 @@
     font-family: 'DM Sans', -apple-system, sans-serif;
     overflow: hidden;
     -webkit-text-size-adjust: 100%;
-    /* Prevent pull-to-refresh and overscroll on iOS */
     overscroll-behavior: none;
   }
 
@@ -150,33 +114,6 @@
     width: 100%;
     height: 100%;
     touch-action: none;
-  }
-
-  .legend-overlay {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    pointer-events: none;
-    opacity: 0.85;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    color: var(--text-dim);
-    background: rgba(10,10,15,0.7);
-    padding: 2px 6px;
-    border-radius: 4px;
-  }
-  .legend-swatch {
-    width: 10px; height: 10px;
-    border-radius: 2px;
-    flex-shrink: 0;
   }
 
   .controls {
@@ -341,7 +278,6 @@
   }
   .crosshair-info.visible { opacity: 1; }
 
-  /* Standalone mode indicator */
   .standalone-badge {
     display: none;
     font-family: 'JetBrains Mono', monospace;
@@ -370,13 +306,6 @@
 
   <div class="canvas-wrap" id="canvasWrap">
     <canvas id="spectrogram"></canvas>
-    <div class="legend-overlay">
-      <div class="legend-item"><div class="legend-swatch" style="background:rgba(239,68,68,0.5)"></div>~25y · 12–20kHz</div>
-      <div class="legend-item"><div class="legend-swatch" style="background:rgba(249,115,22,0.5)"></div>~40y · 8–12kHz</div>
-      <div class="legend-item"><div class="legend-swatch" style="background:rgba(234,179,8,0.45)"></div>~55y · 4–8kHz</div>
-      <div class="legend-item"><div class="legend-swatch" style="background:rgba(34,197,94,0.4)"></div>~70y · 1–4kHz</div>
-      <div class="legend-item"><div class="legend-swatch" style="background:rgba(59,130,246,0.35)"></div>~80y · 20Hz–1kHz</div>
-    </div>
     <div class="db-meter" id="dbMeter">– dB</div>
     <div class="crosshair-info" id="crosshairInfo"></div>
 
@@ -415,9 +344,9 @@
     <div class="toggle-row">
       <span class="toggle-label">Color Map</span>
       <div class="toggle-group">
-        <button type="button" class="toggle-btn active" id="cmapInferno">INFERNO</button>
+        <button type="button" class="toggle-btn active" id="cmapHot">HOT</button>
+        <button type="button" class="toggle-btn" id="cmapElectric">ELECTRIC</button>
         <button type="button" class="toggle-btn" id="cmapGreen">MATRIX</button>
-        <button type="button" class="toggle-btn" id="cmapGray">MONO</button>
       </div>
     </div>
     <div class="btn-row" id="btnRow" style="display:none">
@@ -430,28 +359,17 @@
 (function() {
   'use strict';
 
-  // ——— Register Service Worker ———
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js').then(function(reg) {
-        console.log('SW registered:', reg.scope);
-      }).catch(function(err) {
-        console.log('SW registration failed:', err);
-      });
+      navigator.serviceWorker.register('./sw.js').catch(function() {});
     });
   }
-
-  // ——— Prevent iOS rubber-band / pull-to-refresh ———
-  document.addEventListener('touchmove', function(e) {
-    if (e.target === canvas) return; // allow canvas touch
-    // Only prevent on body-level scroll
-  }, { passive: true });
 
   var audioCtx, analyser, source, stream;
   var isRunning = false;
   var showOverlay = true;
   var freqScale = 'log';
-  var colorMap = 'inferno';
+  var colorMap = 'hot';
   var animId;
 
   var canvas = document.getElementById('spectrogram');
@@ -461,33 +379,91 @@
   var HISTORY = 300;
 
   var hearingZones = [
-    { label: '~80y', minHz: 20,    maxHz: 1000,  color: 'rgba(59,130,246,',  age: 80 },
-    { label: '~70y', minHz: 1000,  maxHz: 4000,  color: 'rgba(34,197,94,',   age: 70 },
-    { label: '~55y', minHz: 4000,  maxHz: 8000,  color: 'rgba(234,179,8,',   age: 55 },
-    { label: '~40y', minHz: 8000,  maxHz: 12000, color: 'rgba(249,115,22,',  age: 40 },
-    { label: '~25y', minHz: 12000, maxHz: 20000, color: 'rgba(239,68,68,',   age: 25 },
+    { label: '~80y  ·  20 Hz – 1 kHz',     minHz: 20,    maxHz: 1000,  bg: 'rgba(59,130,246,',  age: 80 },
+    { label: '~70y  ·  1 – 4 kHz',          minHz: 1000,  maxHz: 4000,  bg: 'rgba(34,197,94,',   age: 70 },
+    { label: '~55y  ·  4 – 8 kHz',          minHz: 4000,  maxHz: 8000,  bg: 'rgba(234,179,8,',   age: 55 },
+    { label: '~40y  ·  8 – 12 kHz',         minHz: 8000,  maxHz: 12000, bg: 'rgba(249,115,22,',  age: 40 },
+    { label: '~25y  ·  12 – 20 kHz',        minHz: 12000, maxHz: 20000, bg: 'rgba(239,68,68,',   age: 25 },
   ];
 
-  function infernoColor(t) {
+  // ——— HIGH-CONTRAST COLOR MAPS ———
+
+  // HOT: black → red → bright yellow → white
+  function hotColor(t) {
     t = Math.max(0, Math.min(1, t));
-    var r = Math.round(Math.min(255, t < 0.5 ? t * 2 * 180 : 180 + (t - 0.5) * 2 * 75));
-    var g = Math.round(t < 0.4 ? t * 15 : t < 0.75 ? (t - 0.4) / 0.35 * 160 : 160 + (t - 0.75) / 0.25 * 95);
-    var b = Math.round(t < 0.3 ? 40 + t / 0.3 * 140 : t < 0.6 ? 180 - (t - 0.3) / 0.3 * 160 : 20);
+    var r, g, b;
+    if (t < 0.33) {
+      // black to red
+      var p = t / 0.33;
+      r = Math.round(p * 255);
+      g = 0;
+      b = 0;
+    } else if (t < 0.66) {
+      // red to yellow
+      var p = (t - 0.33) / 0.33;
+      r = 255;
+      g = Math.round(p * 255);
+      b = 0;
+    } else {
+      // yellow to white
+      var p = (t - 0.66) / 0.34;
+      r = 255;
+      g = 255;
+      b = Math.round(p * 255);
+    }
     return [r, g, b];
   }
+
+  // ELECTRIC: black → deep blue → cyan → bright white
+  function electricColor(t) {
+    t = Math.max(0, Math.min(1, t));
+    var r, g, b;
+    if (t < 0.25) {
+      var p = t / 0.25;
+      r = 0;
+      g = 0;
+      b = Math.round(p * 180);
+    } else if (t < 0.5) {
+      var p = (t - 0.25) / 0.25;
+      r = 0;
+      g = Math.round(p * 220);
+      b = 180 + Math.round(p * 75);
+    } else if (t < 0.75) {
+      var p = (t - 0.5) / 0.25;
+      r = Math.round(p * 100);
+      g = 220 + Math.round(p * 35);
+      b = 255;
+    } else {
+      var p = (t - 0.75) / 0.25;
+      r = 100 + Math.round(p * 155);
+      g = 255;
+      b = 255;
+    }
+    return [r, g, b];
+  }
+
+  // MATRIX: black → green → bright green → white-green
   function greenColor(t) {
     t = Math.max(0, Math.min(1, t));
-    return [0, Math.round(t * 255), Math.round(t * 60)];
+    var r, g, b;
+    if (t < 0.5) {
+      var p = t / 0.5;
+      r = 0;
+      g = Math.round(p * 255);
+      b = Math.round(p * 30);
+    } else {
+      var p = (t - 0.5) / 0.5;
+      r = Math.round(p * 180);
+      g = 255;
+      b = Math.round(30 + p * 140);
+    }
+    return [r, g, b];
   }
-  function grayColor(t) {
-    t = Math.max(0, Math.min(1, t));
-    var v = Math.round(t * 255);
-    return [v, v, v];
-  }
+
   function getColor(t) {
+    if (colorMap === 'electric') return electricColor(t);
     if (colorMap === 'green') return greenColor(t);
-    if (colorMap === 'gray') return grayColor(t);
-    return infernoColor(t);
+    return hotColor(t);
   }
 
   function hzToY(hz, h, sampleRate) {
@@ -539,7 +515,9 @@
       source = audioCtx.createMediaStreamSource(stream);
       analyser = audioCtx.createAnalyser();
       analyser.fftSize = 4096;
-      analyser.smoothingTimeConstant = 0.7;
+      analyser.smoothingTimeConstant = 0.65;
+      analyser.minDecibels = -90;
+      analyser.maxDecibels = -10;
       source.connect(analyser);
       isRunning = true;
       spectroData = [];
@@ -584,8 +562,9 @@
     for (var i = 0; i < floatData.length; i++) {
       if (floatData[i] > maxDb) maxDb = floatData[i];
     }
-    document.getElementById('dbMeter').textContent = (maxDb > -Infinity ? Math.round(maxDb) : '–') + ' dB peak';
+    document.getElementById('dbMeter').textContent = (maxDb > -Infinity ? Math.round(maxDb) : '\u2013') + ' dB peak';
 
+    // Build column
     var col = new Uint8Array(h);
     for (var y = 0; y < h; y++) {
       var hz = yToHz(y, h, sampleRate);
@@ -595,37 +574,66 @@
     spectroData.push(col);
     if (spectroData.length > HISTORY) spectroData.shift();
 
-    ctx.fillStyle = '#0a0a0f';
+    // Clear to true black
+    ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, w, h);
 
+    // ——— HEARING LOSS ZONES ———
     if (showOverlay) {
       for (var zi = 0; zi < hearingZones.length; zi++) {
         var zone = hearingZones[zi];
         var y1 = hzToY(zone.maxHz, h, sampleRate);
         var y2 = hzToY(zone.minHz, h, sampleRate);
         var zoneH = y2 - y1;
+
+        // Subtle colored background
         var grad = ctx.createLinearGradient(0, y1, 0, y2);
-        grad.addColorStop(0, zone.color + '0.22)');
-        grad.addColorStop(0.5, zone.color + '0.12)');
-        grad.addColorStop(1, zone.color + '0.05)');
+        grad.addColorStop(0, zone.bg + '0.18)');
+        grad.addColorStop(0.5, zone.bg + '0.08)');
+        grad.addColorStop(1, zone.bg + '0.03)');
         ctx.fillStyle = grad;
         ctx.fillRect(0, y1, w, zoneH);
-        ctx.strokeStyle = zone.color + '0.3)';
+
+        // Dashed border at top of zone
+        ctx.strokeStyle = zone.bg + '0.35)';
         ctx.lineWidth = 0.5;
         ctx.setLineDash([4, 4]);
         ctx.beginPath();
         ctx.moveTo(0, y1); ctx.lineTo(w, y1);
         ctx.stroke();
         ctx.setLineDash([]);
-        if (zoneH > 18) {
-          ctx.font = '600 10px "JetBrains Mono", monospace';
-          ctx.fillStyle = zone.color + '0.7)';
-          ctx.textAlign = 'right';
-          ctx.fillText(zone.label + '  \u226525dB loss', w - 8, y1 + zoneH / 2 + 3);
+
+        // ——— LARGE WHITE LABELS ———
+        if (zoneH > 24) {
+          var labelY = y1 + zoneH / 2;
+
+          // Text shadow for readability over spectrogram
+          ctx.font = '700 14px "JetBrains Mono", monospace';
+          ctx.textAlign = 'center';
+          var labelX = w / 2;
+
+          // Shadow
+          ctx.fillStyle = 'rgba(0,0,0,0.6)';
+          ctx.fillText(zone.label, labelX + 1, labelY + 4);
+          ctx.fillText(zone.label, labelX - 1, labelY + 4);
+          ctx.fillText(zone.label, labelX, labelY + 3);
+          ctx.fillText(zone.label, labelX, labelY + 5);
+
+          // White text
+          ctx.fillStyle = 'rgba(255,255,255,0.92)';
+          ctx.fillText(zone.label, labelX, labelY + 4);
+
+          // Smaller subtitle
+          ctx.font = '500 10px "JetBrains Mono", monospace';
+          ctx.fillStyle = 'rgba(0,0,0,0.5)';
+          ctx.fillText('\u226525 dB avg hearing loss', labelX, labelY + 18);
+          ctx.fillStyle = 'rgba(255,255,255,0.55)';
+          ctx.fillText('\u226525 dB avg hearing loss', labelX, labelY + 18);
         }
       }
     }
 
+    // ——— SPECTROGRAM (bright, high-contrast) ———
     for (var c = 0; c < spectroData.length; c++) {
       var column = spectroData[c];
       var x = Math.floor((c / HISTORY) * w);
@@ -633,13 +641,18 @@
       var cw = Math.max(1, nextX - x);
       for (var py = 0; py < h; py++) {
         var val = column[py] / 255;
-        if (val < 0.02) continue;
-        var rgb = getColor(val);
-        ctx.fillStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + (0.3 + val * 0.7) + ')';
+        if (val < 0.015) continue;
+        // Boost contrast: apply a curve to make colors pop
+        var boosted = Math.pow(val, 0.7);
+        var rgb = getColor(boosted);
+        // Full opacity for strong signals, still visible for weak
+        var alpha = 0.15 + boosted * 0.85;
+        ctx.fillStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + alpha + ')';
         ctx.fillRect(x, py, cw, 1);
       }
     }
 
+    // Frequency axis ticks
     var ticks = [50, 100, 200, 500, 1000, 2000, 4000, 8000, 12000, 16000, 20000];
     ctx.font = '500 9px "JetBrains Mono", monospace';
     ctx.textAlign = 'left';
@@ -648,9 +661,13 @@
       if (thz > sampleRate / 2) continue;
       var ty = hzToY(thz, h, sampleRate);
       if (ty < 8 || ty > h - 8) continue;
-      ctx.fillStyle = 'rgba(106,106,130,0.5)';
+      // Tick mark
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
       ctx.fillRect(0, ty, 3, 1);
-      ctx.fillStyle = 'rgba(106,106,130,0.7)';
+      // Label with shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillText(thz >= 1000 ? (thz / 1000) + 'k' : thz + '', 6, ty - 1);
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
       ctx.fillText(thz >= 1000 ? (thz / 1000) + 'k' : thz + '', 5, ty - 2);
     }
   }
@@ -679,7 +696,7 @@
   canvas.addEventListener('mousemove', function(e) { showFreqAt(e.clientY); });
   canvas.addEventListener('mouseleave', function() { crosshairEl.classList.remove('visible'); });
 
-  // ——— iOS-safe button wiring ———
+  // iOS-safe button wiring
   var lastTap = 0;
   function tapSafe(id, fn) {
     var el = document.getElementById(id);
@@ -720,13 +737,13 @@
   });
 
   function clearCmap() {
-    document.getElementById('cmapInferno').classList.remove('active');
+    document.getElementById('cmapHot').classList.remove('active');
+    document.getElementById('cmapElectric').classList.remove('active');
     document.getElementById('cmapGreen').classList.remove('active');
-    document.getElementById('cmapGray').classList.remove('active');
   }
-  tapSafe('cmapInferno', function() { colorMap = 'inferno'; clearCmap(); document.getElementById('cmapInferno').classList.add('active'); });
+  tapSafe('cmapHot', function() { colorMap = 'hot'; clearCmap(); document.getElementById('cmapHot').classList.add('active'); });
+  tapSafe('cmapElectric', function() { colorMap = 'electric'; clearCmap(); document.getElementById('cmapElectric').classList.add('active'); });
   tapSafe('cmapGreen', function() { colorMap = 'green'; clearCmap(); document.getElementById('cmapGreen').classList.add('active'); });
-  tapSafe('cmapGray', function() { colorMap = 'gray'; clearCmap(); document.getElementById('cmapGray').classList.add('active'); });
 
   resizeCanvas();
 })();
